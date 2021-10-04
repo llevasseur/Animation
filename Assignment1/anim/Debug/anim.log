@@ -1,0 +1,5 @@
+﻿cl : command line warning D9035: option 'Gm' has been deprecated and will be removed in a future release
+  HermiteSpline.cpp
+C:\Users\Leeovn\Desktop\MyGithub\Animation\Assignment1\ComputerAnimationTemplate2019\anim\HermiteSpline.cpp(299,9): warning C4101: 'F': unreferenced local variable
+C:\Users\Leeovn\Desktop\MyGithub\Animation\Assignment1\ComputerAnimationTemplate2019\anim\HermiteSpline.cpp(237): warning C4715: 'HermiteSpline::command': not all control paths return a value
+  anim.vcxproj -> C:\Users\Leeovn\Desktop\MyGithub\Animation\Assignment1\ComputerAnimationTemplate2019\Build\anim.exe
