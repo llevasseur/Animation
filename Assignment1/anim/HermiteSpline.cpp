@@ -51,6 +51,9 @@ HermiteSpline::HermiteSpline(const std::string& name) :
 	setVector(points[18], -4.464, 3.096, 0);
 	setVector(pointTangents[18], -12.168, -3.936, 0);	 
 	numPoints = 19;
+
+	//Remake the lookup table
+	piecewiseApprox();
 } // HermiteSpline
 
 void HermiteSpline::reset(double time)
@@ -67,6 +70,7 @@ void HermiteSpline::add(Vector point, Vector tangent)
 	display(GL_RENDER);
 
 	//Remake the lookup table
+	piecewiseApprox();
 
 	// Tell the system to redraw the window
 	glutPostRedisplay();
@@ -78,6 +82,7 @@ void HermiteSpline::setTangent(int index, Vector tangent)
 	display(GL_RENDER);
 
 	//Remake the lookup table
+	piecewiseApprox();
 
 	// Tell the system to redraw the window
 	glutPostRedisplay();
@@ -89,9 +94,21 @@ void HermiteSpline::setPoint(int index, Vector point)
 	display(GL_RENDER);
 
 	//Remake the lookup table
-	
+	piecewiseApprox();
+
 	// Tell the system to redraw the window
 	glutPostRedisplay();
+}
+
+void HermiteSpline::piecewiseApprox()
+{
+	Vector tmp;
+	s[0] = 0.0;
+	for (int i = 1; i < numPoints; i++)
+	{
+		VecSubtract(tmp, points[i], points[i - 1]);
+		s[i] = VecLength(tmp) + s[i - 1];
+	}
 }
 
 int HermiteSpline::command(int argc, myCONST_SPEC char** argv)
@@ -152,12 +169,14 @@ int HermiteSpline::command(int argc, myCONST_SPEC char** argv)
 						Vector point;
 						setVector(point, atof(argv[3]), atof(argv[4]), atof(argv[5]));
 						setPoint(atoi(argv[2]), point);
+						return TCL_OK;
 					}
 					else if (strcmp(argv[1], "tangent") == 0)
 					{
 						Vector tangent;
 						setVector(tangent, atof(argv[3]), atof(argv[4]), atof(argv[5]));
 						setTangent(atoi(argv[2]), tangent);
+						return TCL_OK;
 					}
 				}
 				else
@@ -209,7 +228,7 @@ int HermiteSpline::command(int argc, myCONST_SPEC char** argv)
 	{
 		if (argc > 1)
 		{
-			
+			return TCL_OK;
 		}
 		else
 		{
@@ -217,6 +236,64 @@ int HermiteSpline::command(int argc, myCONST_SPEC char** argv)
 			return TCL_ERROR;
 		}
 	} // export command
+	else if (strcmp(argv[0], "cr") == 0)
+	{
+		// Initialize the pointTangents to be Catmull-Rom with second-order accurate boundary conditions
+		Vector dy;
+		Vector dy_2;
+		VecSubtract(dy, points[1], points[0]);
+		VecScale(dy, 2);
+
+		VecSubtract(dy_2, points[2], points[0]);
+		VecScale(dy_2, 0.5);
+
+		VecSubtract(dy, dy, dy_2);
+		setVector(pointTangents[0], dy[0], dy[1], dy[2]);
+		for (int i = 1; i < numPoints - 2; i++)
+		{
+			VecSubtract(dy, points[i + 1], points[i - 1]);
+			VecScale(dy, 0.5);
+			setVector(pointTangents[i], dy[0], dy[1], dy[2]);
+		}
+
+		VecSubtract(dy, points[numPoints - 1], points[numPoints - 2]);
+		VecScale(dy, 2);
+
+		VecSubtract(dy_2, points[numPoints - 1], points[numPoints - 3]);
+		VecScale(dy_2, 0.5);
+
+		VecSubtract(dy, dy, dy_2);
+		setVector(pointTangents[numPoints - 1], dy[0], dy[1], dy[2]);
+
+		// Tell the system to redraw the window
+		glutPostRedisplay();
+		return TCL_OK;
+
+	} // cr command
+	else if (strcmp(argv[0], "getArcLength") == 0)
+	{
+		if (argc == 2)
+		{
+			float t = atof(argv[1]);
+			int i = (int)(t * numPoints + 0.5);
+
+			// Index out of range. lookup table is listed from [0, numPoints-1]
+			// with s[numPoints-1] being the arc length of entire curve.
+			if (i >= numPoints)
+			{
+				i = numPoints - 1;
+			}
+
+			animTcl::OutputMessage("(Note i=%d) Arc Length at t=%f: %f", i, t, s[i]);
+			return TCL_OK;
+		}
+		else
+		{
+			animTcl::OutputMessage("Usage: incorrect number of values given.");
+			return TCL_ERROR;
+		}
+	} // getArcLength command
+
 	else if (strcmp(argv[0], "print") == 0)
 	{
 		if (argc == 2)

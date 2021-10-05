@@ -25,6 +25,8 @@ public:
 
 	void setPoint(int index, Vector point);
 
+	void piecewiseApprox();
+
 	void add(Vector point, Vector tangent);
 
 	void reset(double time);
@@ -37,6 +39,8 @@ protected:
 
 	Vector points[40];
 	Vector pointTangents[40];
+
+	double s[40];
 
 	int numPoints = 0;
 };
