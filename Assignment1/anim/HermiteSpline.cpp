@@ -10,53 +10,7 @@
 HermiteSpline::HermiteSpline(const std::string& name) :
 	BaseSystem(name)
 {
-	//setVector(points[0], 0, 0, 0);
-	//setVector(points[1], 1, 1, 1);
-	//setVector(pointTangents[0], 1, 1, 1);
-	//setVector(pointTangents[1], 1, 1, 1);
-	//numPoints = 2;
-	setVector(points[0], -4.104, 2.664, 0); 
-	setVector(pointTangents[0], 2.64, -2.112, 0);
-	setVector(points[1], -0.336, 2.376, 0);
-	setVector(pointTangents[1], 3.312, -1.8, 0);
-	setVector(points[2], -0.792, 0.864, 0);
-	setVector(pointTangents[2], -2.592, -2.184, 0);
-	setVector(points[3], -2.928, 0.192, 0);
-	setVector(pointTangents[3], -1.392, -1.968, 0);
-	setVector(points[4], -2.184, -1.104, 0);
-	setVector(pointTangents[4], 3.336, -1.44, 0);
-	setVector(points[5], 0.408, - 1.248, 0);
-	setVector(pointTangents[5], 4.656, 1.392, 0);
-	setVector(points[6], 2.472, 0.288, 0);
-	setVector(pointTangents[6], 3.84, 0.768, 0);
-	setVector(points[7], 4.248, -0.48, 0);
-	setVector(pointTangents[7], 1.56, -2.52, 0);
-	setVector(points[8], 4.032, -2.232, 0);
-	setVector(pointTangents[8], -2.112, -3.096, 0);
-	setVector(points[9], 2.136, -3.576, 0);
-	setVector(pointTangents[9], -4.392, -1.464, 0);
-	setVector(points[10], -0.36, -3.696, 0);
-	setVector(pointTangents[10], -4.656, 0.072, 0);
-	setVector(points[11], -2.52, -3.504, 0);
-	setVector(pointTangents[11], -3.384, 1.176, 0);
-	setVector(points[12], -3.744, -2.52, 0);
-	setVector(pointTangents[12], -1.608, 2.688, 0);
-	setVector(points[13], -4.128, -0.816, 0);
-	setVector(pointTangents[13], -1.44, 3.48, 0);
-	setVector(points[14], -5.184, 0.96, 0);
-	setVector(pointTangents[14], -1.032, 3.072, 0);
-	setVector(points[15], -5.16, 2.256, 0);
-	setVector(pointTangents[15], -0.096, 3.096, 0);
-	setVector(points[16], -5.28, 4.056, 0);
-	setVector(pointTangents[16], 1.104, 3.048, 0);
-	setVector(points[17], -4.056, 5.304, 0);
-	setVector(pointTangents[17], 9.744, -0.96, 0);
-	setVector(points[18], -4.464, 3.096, 0);
-	setVector(pointTangents[18], -12.168, -3.936, 0);	 
-	numPoints = 19;
-
-	//Remake the lookup table
-	piecewiseApprox();
+	
 } // HermiteSpline
 
 void HermiteSpline::reset(double time)
@@ -107,10 +61,13 @@ void HermiteSpline::piecewiseApprox()
 {
 	Vector tmp;
 	s[0] = 0.0;
-	for (int i = 1; i < numPoints; i++)
+	for (int i = 0; i < numPoints; i++)
 	{
-		VecSubtract(tmp, points[i], points[i - 1]);
-		s[i] = VecLength(tmp) + s[i - 1];
+		for (int j = 1; j < 100; j++)
+		{
+			VecSubtract(tmp, u[(i * 100) + j], u[((i * 100) + j) - 1]);
+			s[(i * 100) + j] = VecLength(tmp) + s[((i * 100) + j) - 1];
+		}
 	}
 } // HermiteSpline::piecewiseApprox
 
@@ -139,6 +96,15 @@ void HermiteSpline::tokenize(std::string str, std::vector<std::string>& out)
 		tokenized.end());
 
 	out = tokenized;
+}
+
+void HermiteSpline::loadPoints(float values[6], int index)
+{
+	animTcl::OutputMessage("value[0] %f", values[0]);
+	animTcl::OutputMessage("index %d", index);
+	setVector(points[index], values[0], values[1], values[2]);
+	setVector(pointTangents[index], values[3], values[4], values[5]);
+	animTcl::OutputMessage("points[0][0] load %f", points[0][0]);
 }
 
 int HermiteSpline::command(int argc, myCONST_SPEC char** argv)
@@ -252,7 +218,20 @@ int HermiteSpline::command(int argc, myCONST_SPEC char** argv)
 			{
 				//values = std::split(line, split_char);
 				tokenize(str, out);
-				if (count != 0)
+				if (count == 0)
+				{
+					int i = 0;
+					for (std::string token : out)
+					{
+						if (i == 1)
+						{
+							numPoints = stoi(token);
+							animTcl::OutputMessage("File n: %d", numPoints);
+						}
+						i++;
+					}
+				}
+				else
 				{
 					float values[6];
 					int i = 0;
@@ -262,23 +241,18 @@ int HermiteSpline::command(int argc, myCONST_SPEC char** argv)
 						animTcl::OutputMessage("File contents in loop: %f", values[i]);
 						i++;
 					}
+					loadPoints(values, count - 1);
 				}
 				count++;
-				//{
-				//	animTcl::OutputMessage("File contents in loop: %s", values[i]);
-				//}
-				//if (count != 0)
-				//{
-				//	for (int i = 0; i < line.length(); i++)
-				//	{
-				//		if (line[i] == " ")
-				//		animTcl::OutputMessage("File contents in loop: %c", line[i]);
-				//	}
-				//}
-				//animTcl::OutputMessage("File contents in loop: %s", str);
-				//count++;
 			}
 			inFile.close();
+
+			animTcl::OutputMessage("points[0] %f", points[0][0]);
+			//Remake the lookup table
+			piecewiseApprox();
+
+			// Tell the system to redraw the window
+			glutPostRedisplay();
 			return TCL_OK;
 		}
 		else
@@ -435,26 +409,28 @@ void HermiteSpline::display(GLenum mode)
 	}
 	glEnd();
 
-	Vector prevF;
-	Vector F;
+	setVector(u[0], points[0][0], points[0][1], points[0][2]);
+	Vector prevU = { u[0][0], u[0][1], u[0][2] };
 	float tmp_i = 0.0;
+	int tmp_j = 0;
 
 	glBegin(GL_LINE_STRIP);
 	for (int i = 1; i < numPoints; i++)
 	{
-		setVector(prevF, points[i - 1][0], points[i - 1][1], points[i - 1][2]);
+		//setVector(prevF, points[i - 1][0], points[i - 1][1], points[i - 1][2]);
 		for (float j = 0.0; j < 1.0; j+=0.01)
 		{
 			tmp_i = (float)i;
-			setVector(F, 0.0, 0.0, 0.0);
-			f(j + tmp_i - 1.0, tmp_i - 1.0, tmp_i, points[i - 1], points[i], pointTangents[i - 1], pointTangents[i], &F);
+			tmp_j = (int)j * 100;
+			setVector(u[(i - 1) * 100 + tmp_j], 0.0, 0.0, 0.0);
+			f(j + tmp_i - 1.0, tmp_i - 1.0, tmp_i, points[i - 1], points[i], pointTangents[i - 1], pointTangents[i], &u[(i - 1) * 100 + tmp_j]);
 			//animTcl::OutputMessage("Test %f, %f, %f", F[0], F[1], F[2]);
-			glVertex3dv(prevF);
-			glVertex3dv(F);
-			setVector(prevF, F[0], F[1], F[2]);
+			glVertex3dv(prevU);
+			glVertex3dv(u[(i - 1) * 100 + tmp_j]);
+			setVector(prevU, u[(i - 1) * 100 + tmp_j][0], u[(i - 1) * 100 + tmp_j][1], u[(i - 1) * 100 + tmp_j][2]);
 		}
 	}
-	glVertex3dv(prevF);
+	glVertex3dv(prevU);
 	glVertex3dv(points[numPoints - 1]);
 	glEnd();
 } // HermiteSpline::display

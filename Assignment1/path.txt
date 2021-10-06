@@ -1,1 +1,1 @@
-"C:\\Users\\Leeovn\\Desktop\\MyGithub\\Animation\\Assignment1\\ComputerAnimationTemplate2019\\gradingTest3524.txt"
+system hermite load "C:\\Users\\Leeovn\\Downloads\\ComputerAnimationTemplate2019\\gradingTest3524.txt"

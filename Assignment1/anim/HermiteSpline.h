@@ -35,6 +35,8 @@ public:
 
 	void reset(double time);
 
+	void loadPoints(float values[6], int index);
+
 	void f(float t, float ti, float ti_1, Vector y_i, Vector y_i1, Vector s_i, Vector s_i1, Vector* f);
 
 	int command(int argc, myCONST_SPEC char** argv);
@@ -44,7 +46,8 @@ protected:
 	Vector points[40];
 	Vector pointTangents[40];
 
-	double s[40];
+	Vector u[40 * 100];
+	double s[40 * 100];
 
 	int numPoints = 0;
 };

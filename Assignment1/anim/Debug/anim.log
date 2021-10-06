@@ -1,4 +1,8 @@
 ﻿cl : command line warning D9035: option 'Gm' has been deprecated and will be removed in a future release
   HermiteSpline.cpp
-H:\csc473\ComputerAnimationTemplate2019\anim\HermiteSpline.cpp(377): warning C4715: 'HermiteSpline::command': not all control paths return a value
-  anim.vcxproj -> H:\csc473\ComputerAnimationTemplate2019\anim\../Build\anim.exe
+  Generating Code...
+C:\Users\Leeovn\Downloads\ComputerAnimationTemplate2019\anim\HermiteSpline.cpp(348): warning C4715: 'HermiteSpline::command': not all control paths return a value
+  Compiling...
+  myScene.cpp
+  Generating Code...
+  anim.vcxproj -> C:\Users\Leeovn\Downloads\ComputerAnimationTemplate2019\Build\anim.exe
