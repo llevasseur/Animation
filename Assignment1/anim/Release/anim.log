@@ -1,0 +1,28 @@
+﻿  anim.cpp
+  animTcl.cpp
+  BaseObject.cpp
+  BaseSimulator.cpp
+  BaseSystem.cpp
+  GlobalResourceManager.cpp
+  myScene.cpp
+  ResourceManager.cpp
+  SampleGravitySimulator.cpp
+  SampleParticle.cpp
+  Generating Code...
+tcl.lib(tcl83.dll) : error LNK2026: module unsafe for SAFESEH image.
+tcl.lib(tcl83.dll) : error LNK2026: module unsafe for SAFESEH image.
+tcl.lib(tcl83.dll) : error LNK2026: module unsafe for SAFESEH image.
+tcl.lib(tcl83.dll) : error LNK2026: module unsafe for SAFESEH image.
+tcl.lib(tcl83.dll) : error LNK2026: module unsafe for SAFESEH image.
+tcl.lib(tcl83.dll) : error LNK2026: module unsafe for SAFESEH image.
+tcl.lib(tcl83.dll) : error LNK2026: module unsafe for SAFESEH image.
+tcl.lib(tcl83.dll) : error LNK2026: module unsafe for SAFESEH image.
+tcl.lib(tcl83.dll) : error LNK2026: module unsafe for SAFESEH image.
+tcl.lib(tcl83.dll) : error LNK2026: module unsafe for SAFESEH image.
+tk.lib(tk83.dll) : error LNK2026: module unsafe for SAFESEH image.
+tk.lib(tk83.dll) : error LNK2026: module unsafe for SAFESEH image.
+util.lib(Ball.obj) : warning LNK4075: ignoring '/EDITANDCONTINUE' due to '/OPT:ICF' specification
+util.lib(vector.obj) : error LNK2038: mismatch detected for '_ITERATOR_DEBUG_LEVEL': value '2' doesn't match value '0' in anim.obj
+util.lib(vector.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MTd_StaticDebug' doesn't match value 'MT_StaticRelease' in anim.obj
+LINK : warning LNK4098: defaultlib 'LIBCMTD' conflicts with use of other libs; use /NODEFAULTLIB:library
+..\Build\anim.exe : fatal error LNK1281: Unable to generate SAFESEH image.

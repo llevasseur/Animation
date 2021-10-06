@@ -10,6 +10,8 @@
 #include <util/util.h>
 #include "animTcl.h"
 #include <GLmodel/GLmodel.h>
+#include <vector>
+#include <regex>
 
 #include "shared/opengl.h"
 
@@ -26,6 +28,8 @@ public:
 	void setPoint(int index, Vector point);
 
 	void piecewiseApprox();
+
+	void tokenize(std::string str, std::vector<std::string>& out);
 
 	void add(Vector point, Vector tangent);
 

@@ -98,6 +98,7 @@ void MakeScene(void)
 
 	bool success;
 
+
 	HermiteSpline* hermite = new HermiteSpline("hermite");
 
 	success = GlobalResourceManager::use()->addSystem(hermite, true);

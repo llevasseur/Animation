@@ -98,6 +98,7 @@
     <ClCompile Include="animTcl.cpp" />
     <ClCompile Include="BaseObject.cpp" />
     <ClCompile Include="BaseSimulator.cpp" />
+    <ClCompile Include="Bezier.cpp" />
     <ClCompile Include="GlobalResourceManager.cpp" />
     <ClCompile Include="HermiteSpline.cpp" />
     <ClCompile Include="myScene.cpp" />
@@ -113,6 +114,7 @@
     <ClInclude Include="animTcl.h" />
     <ClInclude Include="BaseObject.h" />
     <ClInclude Include="BaseSimulator.h" />
+    <ClInclude Include="Bezier.h" />
     <ClInclude Include="GlobalResourceManager.h" />
     <ClInclude Include="HermiteSpline.h" />
     <ClInclude Include="myScene.h" />

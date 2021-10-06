@@ -2,7 +2,10 @@
 #include "fstream"
 #include <string>
 #include <iostream>
+#include <stdio.h>
 #include <cmath>
+#include <vector>
+#include <regex>
 
 HermiteSpline::HermiteSpline(const std::string& name) :
 	BaseSystem(name)
@@ -74,7 +77,7 @@ void HermiteSpline::add(Vector point, Vector tangent)
 
 	// Tell the system to redraw the window
 	glutPostRedisplay();
-}
+} // HermiteSpline::add
 
 void HermiteSpline::setTangent(int index, Vector tangent)
 {
@@ -86,7 +89,7 @@ void HermiteSpline::setTangent(int index, Vector tangent)
 
 	// Tell the system to redraw the window
 	glutPostRedisplay();
-}
+} // HermiteSpline::setTangent
 
 void HermiteSpline::setPoint(int index, Vector point)
 {
@@ -98,7 +101,7 @@ void HermiteSpline::setPoint(int index, Vector point)
 
 	// Tell the system to redraw the window
 	glutPostRedisplay();
-}
+} // HermiteSpline::setPoint
 
 void HermiteSpline::piecewiseApprox()
 {
@@ -109,6 +112,33 @@ void HermiteSpline::piecewiseApprox()
 		VecSubtract(tmp, points[i], points[i - 1]);
 		s[i] = VecLength(tmp) + s[i - 1];
 	}
+} // HermiteSpline::piecewiseApprox
+
+/**
+ * @brief Tokenize the given vector
+   according to the regex
+ * and remove the empty tokens.
+ *
+ * @param str
+ * @param re
+ * @return std::vector<std::string>
+ */
+void HermiteSpline::tokenize(std::string str, std::vector<std::string>& out)
+{
+	const std::regex re(R"([\s|,]+)");
+	std::sregex_token_iterator it{ str.begin(), str.end(), re, -1 };
+	std::vector<std::string> tokenized{ it, {} };
+
+	// Additional check to remove empty strings
+	tokenized.erase(
+		std::remove_if(tokenized.begin(),
+			tokenized.end(),
+			[](std::string const& s) {
+				return s.size() == 0;
+			}),
+		tokenized.end());
+
+	out = tokenized;
 }
 
 int HermiteSpline::command(int argc, myCONST_SPEC char** argv)
@@ -202,18 +232,51 @@ int HermiteSpline::command(int argc, myCONST_SPEC char** argv)
 		if (argc > 1)
 		{
 			// Take a file, read it and send the data to 
-			std::string STRING;
-			std::ifstream inFile;
-			inFile.open(argv[1]);
+			std::string line;
+			std::ifstream inFile(argv[1]);
+			std::string str;
+			char split_char = ' ';
+			int count = 0;
+			//float values[6];
+
+			std::vector<std::string> out;
+
 			animTcl::OutputMessage("Open file: %s.", argv[1]);
 			if (!inFile)
 			{
 				animTcl::OutputMessage("Unable to open file: %s.", argv[1]);
 				return TCL_ERROR;
 			}
-			while (getline(inFile, STRING))
+			//for (std::string each; std::getline(split, each, split_char); tokens.push_back(each));
+			while (std::getline(inFile, str))
 			{
-				animTcl::OutputMessage("File contents in loop: %s", STRING);
+				//values = std::split(line, split_char);
+				tokenize(str, out);
+				if (count != 0)
+				{
+					float values[6];
+					int i = 0;
+					for (std::string token : out)
+					{
+						values[i] = stod(token);
+						animTcl::OutputMessage("File contents in loop: %f", values[i]);
+						i++;
+					}
+				}
+				count++;
+				//{
+				//	animTcl::OutputMessage("File contents in loop: %s", values[i]);
+				//}
+				//if (count != 0)
+				//{
+				//	for (int i = 0; i < line.length(); i++)
+				//	{
+				//		if (line[i] == " ")
+				//		animTcl::OutputMessage("File contents in loop: %c", line[i]);
+				//	}
+				//}
+				//animTcl::OutputMessage("File contents in loop: %s", str);
+				//count++;
 			}
 			inFile.close();
 			return TCL_OK;
@@ -383,7 +446,7 @@ void HermiteSpline::display(GLenum mode)
 		for (float j = 0.0; j < 1.0; j+=0.01)
 		{
 			tmp_i = (float)i;
-			Vector F = { 0.0, 0.0, 0.0 };
+			setVector(F, 0.0, 0.0, 0.0);
 			f(j + tmp_i - 1.0, tmp_i - 1.0, tmp_i, points[i - 1], points[i], pointTangents[i - 1], pointTangents[i], &F);
 			//animTcl::OutputMessage("Test %f, %f, %f", F[0], F[1], F[2]);
 			glVertex3dv(prevF);
