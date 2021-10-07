@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <iostream>
 #include <math.h>
+#include <direct.h>
 #include "fstream"
 
 #include <shared/defs.h>
@@ -27,6 +28,8 @@
 #include "SampleGravitySimulator.h"
 #include "SampleForceSimulator.h"
 #include "HermiteSpline.h"
+#include "Tank.h"
+#include "Missile.h"
 //#include <util/jama/tnt_stopwatch.h>
 //#include <util/jama/jama_lu.h>
 
@@ -95,16 +98,14 @@ void MakeScene(void)
 	*/
 
 	/* SAMPLE SCENE */
-
-	bool success;
+	/*bool success;
 
 
 	HermiteSpline* hermite = new HermiteSpline("hermite");
 
 	success = GlobalResourceManager::use()->addSystem(hermite, true);
 
-	assert(success);
-
+	assert(success);*/
 
 	// register a system
 	//SampleParticle* sphere1 = new SampleParticle("sphere1");
@@ -191,6 +192,46 @@ static int testGlobalCommand(ClientData clientData, Tcl_Interp *interp, int argc
 
 }	// testGlobalCommand
 
+static int part1GlobalCommand(ClientData clientData, Tcl_Interp* interp, int argc, myCONST_SPEC char** argv)
+{
+	bool success;
+
+	HermiteSpline* hermite = new HermiteSpline("hermite");
+
+	success = GlobalResourceManager::use()->addSystem(hermite, true);
+
+	assert(success);
+
+	animTcl::OutputMessage("Created HermiteSpline \"hermite\"");
+
+	return TCL_OK;
+} // part1GlobalCommand
+
+static int part2GlobalCommand(ClientData clientData, Tcl_Interp* interp, int argc, myCONST_SPEC char** argv)
+{
+	bool success;
+
+	HermiteSpline* tankpath = new HermiteSpline("tankpath");
+
+	success = GlobalResourceManager::use()->addSystem(tankpath, true);
+
+	assert(success);
+
+	Tank* tank = new Tank("tank", "data\\tank.obj", tankpath);
+
+	success = GlobalResourceManager::use()->addSystem(tank, true);
+
+	assert(success);
+
+	Missile* missile = new Missile("missile", "data\\missile.obj");
+
+	success = GlobalResourceManager::use()->addSystem(missile, true);
+
+	assert(success);
+
+	return TCL_OK;
+} // part1GlobalCommand
+
 void mySetScriptCommands(Tcl_Interp *interp)
 {
 
@@ -199,5 +240,11 @@ void mySetScriptCommands(Tcl_Interp *interp)
 
 	Tcl_CreateCommand(interp, "test", testGlobalCommand, (ClientData) NULL,
 					  (Tcl_CmdDeleteProc *)	NULL);
+
+	Tcl_CreateCommand(interp, "part1", part1GlobalCommand, (ClientData)NULL,
+		(Tcl_CmdDeleteProc*)NULL);
+
+	Tcl_CreateCommand(interp, "part2", part2GlobalCommand, (ClientData)NULL,
+		(Tcl_CmdDeleteProc*)NULL);
 
 }	// mySetScriptCommands

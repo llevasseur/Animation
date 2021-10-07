@@ -1,1 +1,12 @@
 system hermite load "C:\\Users\\Leeovn\\Downloads\\ComputerAnimationTemplate2019\\gradingTest3524.txt"
+
+
+
+
+
+
+system tankpath load "gradingTest3525.txt"
+
+
+
+system hermite export "C:\\Users\\Leeovn\\Downloads\\ComputerAnimationTemplate2019\\outputTest3524.txt"

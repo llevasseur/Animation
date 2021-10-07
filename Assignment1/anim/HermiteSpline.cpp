@@ -6,70 +6,50 @@
 #include <cmath>
 #include <vector>
 #include <regex>
+#include <direct.h>
 
 HermiteSpline::HermiteSpline(const std::string& name) :
 	BaseSystem(name)
 {
-	
+	hermiteName = name;
 } // HermiteSpline
 
 void HermiteSpline::reset(double time)
 {
-	
+	numPoints = 0;
+	display(GL_RENDER);
 } // HermiteSpline::reset
-
-void HermiteSpline::add(Vector point, Vector tangent)
-{
-	setVector(points[numPoints], point[0], point[1], point[2]);
-	setVector(pointTangents[numPoints], tangent[0], tangent[1], tangent[2]);
-	animTcl::OutputMessage("testing %f, %f, %f", points[numPoints][0], points[numPoints][1], points[numPoints][2]);
-	numPoints += 1;
-	display(GL_RENDER);
-
-	//Remake the lookup table
-	piecewiseApprox();
-
-	// Tell the system to redraw the window
-	glutPostRedisplay();
-} // HermiteSpline::add
-
-void HermiteSpline::setTangent(int index, Vector tangent)
-{
-	setVector(pointTangents[index], tangent[0], tangent[1], tangent[2]);
-	display(GL_RENDER);
-
-	//Remake the lookup table
-	piecewiseApprox();
-
-	// Tell the system to redraw the window
-	glutPostRedisplay();
-} // HermiteSpline::setTangent
 
 void HermiteSpline::setPoint(int index, Vector point)
 {
 	setVector(points[index], point[0], point[1], point[2]);
 	display(GL_RENDER);
 
-	//Remake the lookup table
-	piecewiseApprox();
-
-	// Tell the system to redraw the window
-	glutPostRedisplay();
+	remake();
 } // HermiteSpline::setPoint
 
-void HermiteSpline::piecewiseApprox()
+void HermiteSpline::setTangent(int index, Vector tangent)
 {
-	Vector tmp;
-	s[0] = 0.0;
-	for (int i = 0; i < numPoints; i++)
-	{
-		for (int j = 1; j < 100; j++)
-		{
-			VecSubtract(tmp, u[(i * 100) + j], u[((i * 100) + j) - 1]);
-			s[(i * 100) + j] = VecLength(tmp) + s[((i * 100) + j) - 1];
-		}
-	}
-} // HermiteSpline::piecewiseApprox
+	setVector(pointTangents[index], tangent[0], tangent[1], tangent[2]);
+	display(GL_RENDER);
+
+	remake();
+} // HermiteSpline::setTangent
+
+void HermiteSpline::add(Vector point, Vector tangent)
+{
+	setVector(points[numPoints], point[0], point[1], point[2]);
+	setVector(pointTangents[numPoints], tangent[0], tangent[1], tangent[2]);
+	numPoints += 1;
+	display(GL_RENDER);
+
+	remake();
+} // HermiteSpline::add
+
+Vector* HermiteSpline::getPoints()
+{
+	return points;
+}
 
 /**
  * @brief Tokenize the given vector
@@ -80,6 +60,7 @@ void HermiteSpline::piecewiseApprox()
  * @param re
  * @return std::vector<std::string>
  */
+// Source: https://www.geeksforgeeks.org/tokenizing-a-string-cpp/
 void HermiteSpline::tokenize(std::string str, std::vector<std::string>& out)
 {
 	const std::regex re(R"([\s|,]+)");
@@ -96,16 +77,243 @@ void HermiteSpline::tokenize(std::string str, std::vector<std::string>& out)
 		tokenized.end());
 
 	out = tokenized;
-}
+} // HermiteSpline::tokenize
+
+void HermiteSpline::piecewiseApprox()
+{
+	Vector tmp;
+	s[0] = 0.0;
+	int index = 0;
+	for (int i = 0; i < numPoints; i++)
+	{
+		for (int j = 1; j <= 100; j++)
+		{
+			index = (i * 100) + j;
+			VecSubtract(tmp, u[index], u[index - 1]);
+			double value = VecLength(tmp) + s[index - 1];
+			s[index] = value;
+		}
+	}
+} // HermiteSpline::piecewiseApprox
+
+// Source: https://stackoverflow.com/questions/5254951/how-to-put-two-backslash-in-c
+std::string HermiteSpline::stripPath(std::string path)
+{
+
+	for (int i = 0; path[i] != '\0'; i++)
+	{
+		if (path[i] == '\\')
+		{
+			path[i] += '\\';
+			i++;
+		}
+	}
+	return path;
+} // HermiteSpline::stripPath
 
 void HermiteSpline::loadPoints(float values[6], int index)
 {
-	animTcl::OutputMessage("value[0] %f", values[0]);
-	animTcl::OutputMessage("index %d", index);
 	setVector(points[index], values[0], values[1], values[2]);
 	setVector(pointTangents[index], values[3], values[4], values[5]);
-	animTcl::OutputMessage("points[0][0] load %f", points[0][0]);
-}
+} // HermiteSpline::loadPoints
+
+int HermiteSpline::loadFile(std::string filename)
+{
+	// Take a file, read it and send the data to 
+	std::string line;
+	std::ifstream inFile(filename);
+	std::vector<std::string> out;
+	int count = 0;
+
+	if (!inFile)
+	{
+		animTcl::OutputMessage("Made it here!");
+		char* cwd = _getcwd(0, 0); // **** microsoft specific ****
+		std::string working_directory(cwd);
+		std::free(cwd);
+
+		std::string cwdFile = working_directory + '\\' + filename;
+		std::ifstream inFile(cwdFile);
+		//inFile.open(stripPath(filename));
+		if (!inFile)
+		{
+			std::string errorText = "Unable to open file: " + filename + "\nAlso tried cwd\file: " + cwdFile;
+			char* charErrorText = new char[errorText.size() + 1];
+			std::copy(errorText.begin(), errorText.end(), charErrorText);
+			charErrorText[errorText.size()] = '\0';
+
+			animTcl::OutputMessage(charErrorText);
+			delete[] charErrorText;
+			return TCL_ERROR;
+		}
+	}
+
+	while (std::getline(inFile, line))
+	{
+		tokenize(line, out);
+		if (count == 0)
+		{
+			// Find number of control points
+			int i = 0;
+			for (std::string token : out)
+			{
+				if (i == 1)
+				{
+					numPoints = stoi(token);
+				}
+				i++;
+			}
+		}
+		else
+		{
+			float values[6];
+			int i = 0;
+			for (std::string token : out)
+			{
+				values[i] = stod(token);
+				i++;
+			}
+			loadPoints(values, count - 1);
+		}
+		count++;
+	}
+	inFile.close();
+	display(GL_RENDER);
+	remake();
+	return TCL_OK;
+} // HermiteSpline::loadFile
+
+int HermiteSpline::exportFile(std::string filename)
+{
+	// Take a file, read it and send the data to 
+	std::ofstream outFile(filename);
+
+	for (int i = 0; i < numPoints; i++)
+	{
+		std::string line1;
+		std::string line2;
+		if (i == 0)
+		{
+			std::string line3;
+			line3 = hermiteName + ' ' + std::to_string(numPoints);
+			outFile << line3 << std::endl;
+		}
+		for (int j = 0; j < 3; j++)
+		{
+			std::string strPoint = std::to_string(points[i][j]);
+			std::string strTangent = std::to_string(pointTangents[i][j]);
+			line1 += strPoint.erase(strPoint.find_last_not_of('0') + 1, std::string::npos) + ' ';
+			line2 += strTangent.erase(strTangent.find_last_not_of('0'), std::string::npos) + ' ';
+			if (j < 2)
+			{
+				line2 += ' ';
+			}
+		}
+		line1 += line2;
+		outFile << line1 << std::endl;
+	}
+	outFile.close();
+	std::string success = "Successfully exported spline to " + filename;
+	char* charSuccess = new char[success.size() + 1];
+	std::copy(success.begin(), success.end(), charSuccess);
+	charSuccess[success.size()] = '\0';
+
+	animTcl::OutputMessage(charSuccess);
+	return TCL_OK;
+
+} // HermiteSpline::exportFile
+
+void HermiteSpline::f(float t, float ti, float ti_1, Vector y_i, Vector y_i1, Vector s_i, Vector s_i1, Vector* f)
+{
+	// Initialize tmp holders
+	Vector tmp_y_i = { y_i[0], y_i[1], y_i[2] };
+	Vector tmp_y_i1 = { y_i1[0], y_i1[1], y_i1[2] };
+	Vector tmp_s_i = { s_i[0], s_i[1], s_i[2] };
+	Vector tmp_s_i1 = { s_i1[0], s_i1[1], s_i1[2] };
+
+	// Determine coefficients
+	float dt = ti_1 - ti;
+	float tmp_dt = t - ti;
+	float c0 = (2 * pow(tmp_dt, 3) / pow(dt, 3)) - (3 * pow(tmp_dt, 2) / pow(dt, 2)) + 1;
+	float c1 = (-2 * pow(tmp_dt, 3) / pow(dt, 3)) + (3 * pow(tmp_dt, 2) / pow(dt, 2));
+	float c2 = (pow(tmp_dt, 3) / pow(dt, 2)) - (2 * pow(tmp_dt, 2) / pow(dt, 2)) + tmp_dt;
+	float c3 = (pow(tmp_dt, 3) / pow(dt, 2)) - (pow(tmp_dt, 2) / dt);
+
+	//animTcl::OutputMessage("tmp_y_i before: %f %f %f", tmp_y_i[0], tmp_y_i[1], tmp_y_i[2]);
+	//animTcl::OutputMessage("tmp_y_i1 before: %f %f %f", tmp_y_i1[0], tmp_y_i1[1], tmp_y_i1[2]);
+	//animTcl::OutputMessage("tmp_s_i before: %f %f %f", tmp_s_i[0], tmp_s_i[1], tmp_s_i[2]);
+	//animTcl::OutputMessage("tmp_s_i1 before: %f %f %f", tmp_s_i1[0], tmp_s_i1[1], tmp_s_i1[2]);
+	//animTcl::OutputMessage("a %f", a);
+	//animTcl::OutputMessage("b %f", b);
+	//animTcl::OutputMessage("c %f", c);
+	//animTcl::OutputMessage("d %f", d);
+
+	// Apply coefficients
+	VecScale(tmp_y_i, c0);
+	VecScale(tmp_y_i1, c1);
+	VecScale(tmp_s_i, c2);
+	VecScale(tmp_s_i1, c3);
+
+	//animTcl::OutputMessage("tmp_y_i after: %f %f %f", tmp_y_i[0], tmp_y_i[1], tmp_y_i[2]);
+	//animTcl::OutputMessage("tmp_y_i1 after: %f %f %f", tmp_y_i1[0], tmp_y_i1[1], tmp_y_i1[2]);
+	//animTcl::OutputMessage("tmp_s_i after: %f %f %f", tmp_s_i[0], tmp_s_i[1], tmp_s_i[2]);
+	//animTcl::OutputMessage("tmp_s_i1 after: %f %f %f", tmp_s_i1[0], tmp_s_i1[1], tmp_s_i1[2]);
+
+	// Add together and eventually solve for f(t)
+	VecAdd(tmp_y_i, tmp_y_i, tmp_y_i1);
+	//animTcl::OutputMessage("tmp_y_i1 added to tmp_y_i: %f %f %f", tmp_y_i[0], tmp_y_i[1], tmp_y_i[2]);
+	VecAdd(tmp_s_i, tmp_s_i, tmp_s_i1);
+	//animTcl::OutputMessage("tmp_s_i1 added to tmp_s_i: %f %f %f", tmp_s_i[0], tmp_s_i[1], tmp_s_i[2]);
+	VecAdd(*f, tmp_y_i, tmp_s_i);
+	//animTcl::OutputMessage("tmp_y_i added to tmp_s_i: %f %f %f", f[0], f[1], f[2]);
+} // HermiteSpline::f
+
+void HermiteSpline::catmullRom()
+{
+	// Initialize the pointTangents to be Catmull-Rom with second-order accurate boundary conditions
+	Vector dy;
+	Vector dy_2;
+	VecSubtract(dy, points[1], points[0]);
+	VecScale(dy, 2);
+
+	VecSubtract(dy_2, points[2], points[0]);
+	VecScale(dy_2, 0.5);
+
+	VecSubtract(dy, dy, dy_2);
+	setVector(pointTangents[0], dy[0], dy[1], dy[2]);
+	for (int i = 1; i < numPoints - 2; i++)
+	{
+		VecSubtract(dy, points[i + 1], points[i - 1]);
+		VecScale(dy, 0.5);
+		setVector(pointTangents[i], dy[0], dy[1], dy[2]);
+	}
+
+	VecSubtract(dy, points[numPoints - 1], points[numPoints - 2]);
+	VecScale(dy, 2);
+
+	VecSubtract(dy_2, points[numPoints - 1], points[numPoints - 3]);
+	VecScale(dy_2, 0.5);
+
+	VecSubtract(dy, dy, dy_2);
+	setVector(pointTangents[numPoints - 1], dy[0], dy[1], dy[2]);
+
+	// Tell the system to redraw the window
+	glutPostRedisplay();
+} // HermiteSpline::catmullRom
+
+void HermiteSpline::arcLength(float t)
+{
+	
+	int i = (int)(t * (numPoints - 1) * 100 + 0.5);
+
+	// Index out of range. lookup table is listed from [0, numPoints-1]
+	// with s[numPoints-1] being the arc length of entire curve.
+	if (i >= (numPoints - 1) * 100)
+	{
+		i = (numPoints - 1) * 100;
+	}
+	animTcl::OutputMessage("(Note i=%d) Arc Length, s, at t=%f: %f", i, t, s[i]);
+} // HermiteSpline::arcLength
 
 int HermiteSpline::command(int argc, myCONST_SPEC char** argv)
 {
@@ -158,7 +366,7 @@ int HermiteSpline::command(int argc, myCONST_SPEC char** argv)
 		{
 			if (argc == 6)
 			{
-				if (atoi(argv[2]) <= numPoints || atoi(argv[2]) > 40)
+				if (atoi(argv[2]) < numPoints || atoi(argv[2]) > 40)
 				{
 					if (strcmp(argv[1], "point") == 0)
 					{
@@ -197,63 +405,7 @@ int HermiteSpline::command(int argc, myCONST_SPEC char** argv)
 	{
 		if (argc > 1)
 		{
-			// Take a file, read it and send the data to 
-			std::string line;
-			std::ifstream inFile(argv[1]);
-			std::string str;
-			char split_char = ' ';
-			int count = 0;
-			//float values[6];
-
-			std::vector<std::string> out;
-
-			animTcl::OutputMessage("Open file: %s.", argv[1]);
-			if (!inFile)
-			{
-				animTcl::OutputMessage("Unable to open file: %s.", argv[1]);
-				return TCL_ERROR;
-			}
-			//for (std::string each; std::getline(split, each, split_char); tokens.push_back(each));
-			while (std::getline(inFile, str))
-			{
-				//values = std::split(line, split_char);
-				tokenize(str, out);
-				if (count == 0)
-				{
-					int i = 0;
-					for (std::string token : out)
-					{
-						if (i == 1)
-						{
-							numPoints = stoi(token);
-							animTcl::OutputMessage("File n: %d", numPoints);
-						}
-						i++;
-					}
-				}
-				else
-				{
-					float values[6];
-					int i = 0;
-					for (std::string token : out)
-					{
-						values[i] = stod(token);
-						animTcl::OutputMessage("File contents in loop: %f", values[i]);
-						i++;
-					}
-					loadPoints(values, count - 1);
-				}
-				count++;
-			}
-			inFile.close();
-
-			animTcl::OutputMessage("points[0] %f", points[0][0]);
-			//Remake the lookup table
-			piecewiseApprox();
-
-			// Tell the system to redraw the window
-			glutPostRedisplay();
-			return TCL_OK;
+			return loadFile(argv[1]);
 		}
 		else
 		{
@@ -265,7 +417,7 @@ int HermiteSpline::command(int argc, myCONST_SPEC char** argv)
 	{
 		if (argc > 1)
 		{
-			return TCL_OK;
+			return exportFile(argv[1]);
 		}
 		else
 		{
@@ -275,53 +427,15 @@ int HermiteSpline::command(int argc, myCONST_SPEC char** argv)
 	} // export command
 	else if (strcmp(argv[0], "cr") == 0)
 	{
-		// Initialize the pointTangents to be Catmull-Rom with second-order accurate boundary conditions
-		Vector dy;
-		Vector dy_2;
-		VecSubtract(dy, points[1], points[0]);
-		VecScale(dy, 2);
-
-		VecSubtract(dy_2, points[2], points[0]);
-		VecScale(dy_2, 0.5);
-
-		VecSubtract(dy, dy, dy_2);
-		setVector(pointTangents[0], dy[0], dy[1], dy[2]);
-		for (int i = 1; i < numPoints - 2; i++)
-		{
-			VecSubtract(dy, points[i + 1], points[i - 1]);
-			VecScale(dy, 0.5);
-			setVector(pointTangents[i], dy[0], dy[1], dy[2]);
-		}
-
-		VecSubtract(dy, points[numPoints - 1], points[numPoints - 2]);
-		VecScale(dy, 2);
-
-		VecSubtract(dy_2, points[numPoints - 1], points[numPoints - 3]);
-		VecScale(dy_2, 0.5);
-
-		VecSubtract(dy, dy, dy_2);
-		setVector(pointTangents[numPoints - 1], dy[0], dy[1], dy[2]);
-
-		// Tell the system to redraw the window
-		glutPostRedisplay();
+		catmullRom();
 		return TCL_OK;
-
 	} // cr command
 	else if (strcmp(argv[0], "getArcLength") == 0)
 	{
 		if (argc == 2)
 		{
 			float t = atof(argv[1]);
-			int i = (int)(t * numPoints + 0.5);
-
-			// Index out of range. lookup table is listed from [0, numPoints-1]
-			// with s[numPoints-1] being the arc length of entire curve.
-			if (i >= numPoints)
-			{
-				i = numPoints - 1;
-			}
-
-			animTcl::OutputMessage("(Note i=%d) Arc Length at t=%f: %f", i, t, s[i]);
+			arcLength(t);
 			return TCL_OK;
 		}
 		else
@@ -330,81 +444,26 @@ int HermiteSpline::command(int argc, myCONST_SPEC char** argv)
 			return TCL_ERROR;
 		}
 	} // getArcLength command
-
-	else if (strcmp(argv[0], "print") == 0)
-	{
-		if (argc == 2)
-		{
-			animTcl::OutputMessage("Hello World!");
-			return TCL_OK;
-		}
-		else
-		{
-			animTcl::OutputMessage("Usage: print <file_name>");
-			return TCL_ERROR;
-		}
-	} // print command
 	else
 	{
+		animTcl::OutputMessage("Error: unknown command given.");
 		return TCL_ERROR;
 	}
 } // HermiteSpline::command
 
-void HermiteSpline::f(float t, float ti, float ti_1, Vector y_i, Vector y_i1, Vector s_i, Vector s_i1, Vector* f)
-{
-	// Initialize tmp holders
-	Vector tmp_y_i = { y_i[0], y_i[1], y_i[2] };
-	Vector tmp_y_i1 = { y_i1[0], y_i1[1], y_i1[2] };
-	Vector tmp_s_i = { s_i[0], s_i[1], s_i[2] };
-	Vector tmp_s_i1 = { s_i1[0], s_i1[1], s_i1[2] };
-
-	// Determine coefficients
-	float dt = ti_1 - ti;
-	float tmp_dt = t - ti;
-	float a = (2 * pow(tmp_dt, 3) / pow(dt, 3)) - (3 * pow(tmp_dt, 2) / pow(dt, 2)) + 1;
-	float b = (-2 * pow(tmp_dt, 3) / pow(dt, 3)) + (3 * pow(tmp_dt, 2) / pow(dt, 2));
-	float c = (pow(tmp_dt, 3) / pow(dt, 2)) - (2 * pow(tmp_dt, 2) / pow(dt, 2)) + tmp_dt;
-	float d = (pow(tmp_dt, 3) / pow(dt, 2)) - (pow(tmp_dt, 2) / dt);
-
-	//animTcl::OutputMessage("tmp_y_i before: %f %f %f", tmp_y_i[0], tmp_y_i[1], tmp_y_i[2]);
-	//animTcl::OutputMessage("tmp_y_i1 before: %f %f %f", tmp_y_i1[0], tmp_y_i1[1], tmp_y_i1[2]);
-	//animTcl::OutputMessage("tmp_s_i before: %f %f %f", tmp_s_i[0], tmp_s_i[1], tmp_s_i[2]);
-	//animTcl::OutputMessage("tmp_s_i1 before: %f %f %f", tmp_s_i1[0], tmp_s_i1[1], tmp_s_i1[2]);
-	//animTcl::OutputMessage("a %f", a);
-	//animTcl::OutputMessage("b %f", b);
-	//animTcl::OutputMessage("c %f", c);
-	//animTcl::OutputMessage("d %f", d);
-
-	// Apply coefficients
-	VecScale(tmp_y_i, a);
-	VecScale(tmp_y_i1, b);
-	VecScale(tmp_s_i, c);
-	VecScale(tmp_s_i1, d);
-
-	//animTcl::OutputMessage("tmp_y_i after: %f %f %f", tmp_y_i[0], tmp_y_i[1], tmp_y_i[2]);
-	//animTcl::OutputMessage("tmp_y_i1 after: %f %f %f", tmp_y_i1[0], tmp_y_i1[1], tmp_y_i1[2]);
-	//animTcl::OutputMessage("tmp_s_i after: %f %f %f", tmp_s_i[0], tmp_s_i[1], tmp_s_i[2]);
-	//animTcl::OutputMessage("tmp_s_i1 after: %f %f %f", tmp_s_i1[0], tmp_s_i1[1], tmp_s_i1[2]);
-
-	// Add together and eventually solve for f(t)
-	VecAdd(tmp_y_i, tmp_y_i, tmp_y_i1);
-	//animTcl::OutputMessage("tmp_y_i1 added to tmp_y_i: %f %f %f", tmp_y_i[0], tmp_y_i[1], tmp_y_i[2]);
-	VecAdd(tmp_s_i, tmp_s_i, tmp_s_i1);
-	//animTcl::OutputMessage("tmp_s_i1 added to tmp_s_i: %f %f %f", tmp_s_i[0], tmp_s_i[1], tmp_s_i[2]);
-	VecAdd(*f, tmp_y_i, tmp_s_i);
-	//animTcl::OutputMessage("tmp_y_i added to tmp_s_i: %f %f %f", f[0], f[1], f[2]);
-} // HermiteSpline::f
-
 void HermiteSpline::display(GLenum mode)
 {
-	glEnable(GL_NORMALIZE);
+	glEnable(GL_LIGHTING);
+	glMatrixMode(GL_MODELVIEW);
+	glPushAttrib(GL_ALL_ATTRIB_BITS);
+	glEnable(GL_COLOR_MATERIAL);
 	glPointSize(10);
 	glColor3f(1.0, 0.0, 0.0);
 	glBegin(GL_POINTS);
-	animTcl::OutputMessage("%d", numPoints);
+	//animTcl::OutputMessage("test s: %f", s[1]);
 	for (int i = 0; i < numPoints; i++)
 	{
-		animTcl::OutputMessage("hello %f, %f, %f", points[i][0], points[i][1], points[i][2]);
+		//animTcl::OutputMessage("control point added: %f, %f, %f", points[i][0], points[i][1], points[i][2]);
 		glVertex3dv(points[i]);
 	}
 	glEnd();
@@ -413,24 +472,49 @@ void HermiteSpline::display(GLenum mode)
 	Vector prevU = { u[0][0], u[0][1], u[0][2] };
 	float tmp_i = 0.0;
 	int tmp_j = 0;
+	float ti = 0.0;
+	float t = 0.0;
+	float ti_1 = 0.0;
 
+	glColor3f(1.0, 1.0, 1.0);
 	glBegin(GL_LINE_STRIP);
 	for (int i = 1; i < numPoints; i++)
 	{
-		//setVector(prevF, points[i - 1][0], points[i - 1][1], points[i - 1][2]);
-		for (float j = 0.0; j < 1.0; j+=0.01)
+		for (int j = 1; j <= 100; j++)
 		{
 			tmp_i = (float)i;
-			tmp_j = (int)j * 100;
-			setVector(u[(i - 1) * 100 + tmp_j], 0.0, 0.0, 0.0);
-			f(j + tmp_i - 1.0, tmp_i - 1.0, tmp_i, points[i - 1], points[i], pointTangents[i - 1], pointTangents[i], &u[(i - 1) * 100 + tmp_j]);
-			//animTcl::OutputMessage("Test %f, %f, %f", F[0], F[1], F[2]);
+			tmp_j = (float)j;
+			ti = tmp_i - 1.0;
+			t = tmp_j/100.0 + ti;
+			ti_1 = tmp_i;
+			
+			int index = (i - 1) * 100 + j;
+			setVector(u[index], 0.0, 0.0, 0.0); // initialize new u
+			f(t, ti, ti_1, points[i - 1], points[i], pointTangents[i - 1], pointTangents[i], &u[index]);
+
 			glVertex3dv(prevU);
-			glVertex3dv(u[(i - 1) * 100 + tmp_j]);
-			setVector(prevU, u[(i - 1) * 100 + tmp_j][0], u[(i - 1) * 100 + tmp_j][1], u[(i - 1) * 100 + tmp_j][2]);
+			glVertex3dv(u[index]);
+			setVector(prevU, u[index][0], u[index][1], u[index][2]);
+			/*if (i < 5)
+			{
+				animTcl::OutputMessage("u[%d] is set to: %f %f %f", index, u[index][0], u[index][1], u[index][2]);
+			}*/
 		}
 	}
 	glVertex3dv(prevU);
 	glVertex3dv(points[numPoints - 1]);
 	glEnd();
+
+	glPopMatrix();
+	glPopAttrib();
 } // HermiteSpline::display
+
+void HermiteSpline::remake()
+{
+	//Remake the lookup table
+	piecewiseApprox();
+
+	// Tell the system to redraw the window
+	glutPostRedisplay();
+
+} // HermiteSpline::remake

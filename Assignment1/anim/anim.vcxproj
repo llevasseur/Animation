@@ -101,12 +101,15 @@
     <ClCompile Include="Bezier.cpp" />
     <ClCompile Include="GlobalResourceManager.cpp" />
     <ClCompile Include="HermiteSpline.cpp" />
+    <ClCompile Include="Missile.cpp" />
     <ClCompile Include="myScene.cpp" />
     <ClCompile Include="ResourceManager.cpp" />
     <ClCompile Include="SampleGravitySimulator.cpp" />
     <ClCompile Include="SampleParticle.cpp" />
     <ClCompile Include="BaseSystem.cpp" />
     <ClCompile Include="SampleForceSimulator.cpp" />
+    <ClCompile Include="Tank.cpp" />
+    <ClCompile Include="TankMovement.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BaseSystem.h" />
@@ -117,11 +120,14 @@
     <ClInclude Include="Bezier.h" />
     <ClInclude Include="GlobalResourceManager.h" />
     <ClInclude Include="HermiteSpline.h" />
+    <ClInclude Include="Missile.h" />
     <ClInclude Include="myScene.h" />
     <ClInclude Include="ResourceManager.h" />
     <ClInclude Include="SampleGravitySimulator.h" />
     <ClInclude Include="SampleParticle.h" />
     <ClInclude Include="SampleForceSimulator.h" />
+    <ClInclude Include="Tank.h" />
+    <ClInclude Include="TankMovement.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\GLModel\GLModel.vcxproj">
