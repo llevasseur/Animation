@@ -10,3 +10,5 @@ system tankpath load "gradingTest3525.txt"
 
 
 system hermite export "C:\\Users\\Leeovn\\Downloads\\ComputerAnimationTemplate2019\\outputTest3524.txt"
+
+Am I supposed to get a tangent for each item 
