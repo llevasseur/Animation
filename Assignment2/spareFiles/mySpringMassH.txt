@@ -1,0 +1,69 @@
+#ifndef MY_SPRING_MASS_H
+#define MY_SPRING_MASS_H
+
+/*
+
+	This is a Spring mass system. 
+
+*/
+
+#include "BaseSystem.h"
+#include <shared/defs.h>
+#include <util/util.h>
+#include "animTcl.h"
+#include <GLmodel/GLmodel.h>
+
+#include "shared/opengl.h"
+#include <vector>
+using std::vector;
+
+// a spring mass system
+class SpringMass : public BaseSystem
+{
+
+public:
+	SpringMass(const std::string& name);
+	virtual void getState(vector<Vector*> p, vector<Vector*> v);
+	virtual void setState(vector<Vector*> p);
+	void reset(double time);
+	void setVel(vector<Vector*> v);
+
+	vector<Vector*> getParticles();
+	vector<Vector*> getVelocities();
+	vector<Vector*> getPrevParticles();
+	vector<vector<int>> getConnections();
+	vector<vector<double*>> getSpringParams();
+	vector<double> getMasses();
+	bool* getNailed();
+
+
+	void setSpringID(int index1, int index2);
+	void addConnection(int index1, int index2);
+	void addSpringParams(int index, double ks, double kd, double restlength);
+	void spring(int index1, int index2, double ks, double kd, double restlength);
+
+	void nailParticle(int index);
+
+	
+	int command(int argc, myCONST_SPEC char** argv);
+	void display(GLenum mode = GL_RENDER);
+
+	int numParticles = 0;
+	vector<vector<int>> myConnections;
+	vector<vector<double*>> mySpringParams;
+
+	vector<double> masses;
+
+	vector<Vector*> particles;
+	vector<Vector*> velocities;
+	vector<Vector*> prevParticles;
+
+	vector<int*> springs; // list of index pairs connected by a spring
+
+	bool* nailed;
+
+protected:
+
+
+};
+#endif

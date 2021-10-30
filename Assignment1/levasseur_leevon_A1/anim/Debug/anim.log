@@ -1,0 +1,22 @@
+﻿cl : command line warning D9035: option 'Gm' has been deprecated and will be removed in a future release
+  TankMovement.cpp
+  Tank.cpp
+  SampleForceSimulator.cpp
+  BaseSystem.cpp
+  SampleParticle.cpp
+  SampleGravitySimulator.cpp
+  ResourceManager.cpp
+  myScene.cpp
+  MissileMovement.cpp
+  Missile.cpp
+  HermiteSpline.cpp
+  GlobalResourceManager.cpp
+  Bezier.cpp
+  BaseSimulator.cpp
+  BaseObject.cpp
+  animTcl.cpp
+  anim.cpp
+  Generating Code...
+C:\Users\Leeovn\Downloads\ComputerAnimationTemplate2019\anim\Bezier.cpp(98): warning C4715: 'Bezier::command': not all control paths return a value
+C:\Users\Leeovn\Downloads\ComputerAnimationTemplate2019\anim\HermiteSpline.cpp(449): warning C4715: 'HermiteSpline::command': not all control paths return a value
+  anim.vcxproj -> C:\Users\Leeovn\Downloads\ComputerAnimationTemplate2019\Build\anim.exe

@@ -1,0 +1,41 @@
+for (int x = 0; x < connections[i].size(); x++) {
+						float* particle2 = new float[3]{ pos[connections[i][x]][0], pos[connections[i][x]][1], pos[connections[i][x]][2] };
+						int otherIndex = connections[i][x];
+
+						/*start spring force calc*/
+						float rest = allSpringVals[i][x][2];
+						float stiff = allSpringVals[i][x][0];
+						float distance = sqrt(pow(particle2[0] - particle1[0], 2) + pow(particle2[1] - particle1[1], 2) + pow(particle2[2] - particle1[2], 2));
+						float restDistanceDiff = rest - distance;
+						float* pDiff = new float[3]{ (particle1[0] - particle2[0]) / distance, (particle1[1] - particle2[1]) / distance, (particle1[2] - particle2[2]) / distance };
+						float* fP = new float[3]{ stiff * pDiff[0] * restDistanceDiff, stiff * pDiff[1] * restDistanceDiff, stiff * pDiff[2] * restDistanceDiff };
+						/*end spring force calc*/
+
+
+						/*start damper force calc*/
+						float damp = 0.0 - allSpringVals[i][x][1];
+						float* velocity1 = new float[3]{ vel[i][0], vel[i][1], vel[i][2] };
+						float* velocity2 = new float[3]{ vel[otherIndex][0], vel[otherIndex][1], vel[otherIndex][2] };
+						float* vDiff = new float[3]{ velocity1[0] - velocity2[0], velocity1[1] - velocity2[1], velocity1[2] - velocity2[2] };
+
+						float dotProd = vDiff[0] * pDiff[0] + vDiff[1] * pDiff[1] + vDiff[2] * pDiff[2];
+
+						float* fD = new float[3]{ damp * dotProd * pDiff[0], damp * dotProd * pDiff[1], damp * dotProd * pDiff[2] };
+						/*end damper force calc*/
+
+						/*add to total*/
+						total[0] = total[0] + fP[0] + fD[0];
+						total[1] = total[1] + fP[1] + fD[1];
+						total[2] = total[2] + fP[2] + fD[2];
+					}
+
+				total[0] = total[0] + (0.0 - drag) * thisVel[0];
+				total[1] = total[1] + (0.0 - drag) * thisVel[1] + masses[i] * g;
+				total[2] = total[2] + (0.0 - drag) * thisVel[2];
+
+				float* particle = new float[3]{ pos[i][0], pos[i][1], pos[i][2] };
+				float* savedVel = new float[3]{ vel[i][0], vel[i][1], vel[i][2] };
+				//animTcl::OutputMessage("x vel is %f", savedVel[0]);
+				thisVel[0] = thisVel[0] + time * total[0] / masses[i];
+				thisVel[1] = thisVel[1] + time * total[1] / masses[i];
+				thisVel[2] = thisVel[2] + time * total[2] / masses[i];

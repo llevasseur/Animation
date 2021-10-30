@@ -1,0 +1,226 @@
+#include "SpringMass.h"
+
+SpringMass::SpringMass(const std::string& name) :
+	BaseSystem(name)
+{
+
+} // SpringMass
+
+void SpringMass::getState(vector<Vector*> p, vector<Vector*> v)
+{
+	p = vector<Vector*>(particles);
+	v = velocities;
+}	// ParticleSystem::getState
+
+void SpringMass::setState(vector<Vector*> p)
+{
+	prevParticles = particles;
+	particles = p;
+
+}	// ParticleSystem::setState
+
+void SpringMass::reset(double time)
+{
+
+} // SpringMass::reset
+
+void SpringMass::setVel(vector<Vector*> v)
+{
+	velocities = v;
+} // SpringMass::setVel
+
+vector<Vector*> SpringMass::getParticles()
+{
+	return particles;
+} // SpringMass::getParticles
+
+vector<Vector*> SpringMass::getVelocities()
+{
+	return velocities;
+} // SpringMass::getVelocities
+
+vector<Vector*> SpringMass::getPrevParticles()
+{
+	return prevParticles;
+} // SpringMass::getParticles
+
+vector<vector<int>> SpringMass::getConnections()
+{
+	return myConnections;
+} // SpringMass::getConnections
+
+vector<vector<double*>> SpringMass::getSpringParams()
+{
+	return mySpringParams;
+} // SpringMass::getSpringParams
+
+vector<double> SpringMass::getMasses()
+{
+	return masses;
+} // SpringMass::getMasses
+
+bool* SpringMass::getNailed()
+{
+	return nailed;
+} // SpringMass::getNailed
+
+
+
+void SpringMass::setSpringID(int index1, int index2)
+{
+	int* indexPair = new int[2];
+	indexPair[0] = index1;
+	indexPair[1] = index2;
+	springs.push_back(indexPair);
+} // SpringMass::setSpringID
+
+void SpringMass::addConnection(int index1, int index2)
+{
+	vector<int> connections = myConnections.at(index1); // The initially empty list in myConnections[index1].
+	connections.push_back(index2);
+	myConnections[index1] = connections;
+} // SpringMass::addConnection
+
+void SpringMass::addSpringParams(int index, double ks, double kd, double restlength)
+{
+	vector<double*> params = mySpringParams.at(index); // The initially empty list in mySpringP
+	Vector currentParams;
+	setVector(currentParams, ks, kd, restlength);
+	params.push_back(currentParams); // error
+	mySpringParams[index] = params;
+} // SpringMass::addSpringParams
+
+void SpringMass::spring(int index1, int index2, double ks, double kd, double restlength)
+{
+	// Set up spring
+	if (restlength < 0)
+	{
+		// Set the restlength of the spring to the distance between the corresponding particles
+		Vector p1;
+		Vector p2;
+		VecCopy(p1, *particles[index1]);
+		VecCopy(p2, *particles[index2]);
+		
+		restlength = sqrt(pow(p2[0] - p1[0], 2) + pow(p2[1] - p1[1], 2) + pow(p2[2] - p1[2], 2));
+	}
+	
+	setSpringID(index1, index2);
+	addConnection(index1, index2);
+	addConnection(index2, index1);
+	addSpringParams(index1, ks, kd, restlength);
+	addSpringParams(index2, ks, kd, restlength);
+} // SpringMass::spring
+
+void SpringMass::nailParticle(int index)
+{
+	nailed[index] = true;
+} // SpringMass::nailParticle
+
+int SpringMass::command(int argc, myCONST_SPEC char** argv)
+{
+	if (argc < 1)
+	{
+		animTcl::OutputMessage("system %s: wrong number of params.", m_name.c_str());
+		return TCL_ERROR;
+	}
+	else if (strcmp(argv[0], "dim") == 0)
+	{
+		// Determine number of particles and initialize variable sizes accordingly.
+		if (argc == 2)
+		{
+			numParticles = std::stoi(argv[1]);
+			nailed = new bool[numParticles];
+
+			for (int i = 0; i < numParticles; i++)
+			{
+				vector<int> emptyConnection;
+				vector<double*> params;
+				myConnections.push_back(emptyConnection);
+				mySpringParams.push_back(params);
+				nailed[i] = false;
+			}
+		}
+		else
+		{
+			animTcl::OutputMessage("system %s: wrong number of params for command 'dim'.", m_name.c_str());
+			return TCL_ERROR;
+		}
+	}
+	else if (strcmp(argv[0], "particle") == 0)
+	{
+		// initialize a particle; index, mass, initial position and velocity. Add to list of positions and velocities.
+		if (argc == 9)
+		{
+			int index = std::stoi(argv[1]);
+			if (index > numParticles - 1)
+			{
+				animTcl::OutputMessage("system %s: index out of bounds in 'particle'.", m_name.c_str());
+				return TCL_ERROR;
+			}
+			int mass = std::stod(argv[2]);
+			masses.push_back(mass);
+
+			Vector p = { std::stod(argv[3]), std::stod(argv[4]), std::stod(argv[5]) };
+			Vector v = { std::stod(argv[6]),  std::stod(argv[7]),  std::stod(argv[8]) };
+
+			particles.push_back(&p); //error
+			velocities.push_back(&v);
+
+			animTcl::OutputMessage("particles[0]: {%f, %f, %f}", *(particles[0])[0], *(particles[0])[1], *(particles[0])[2]);
+		}
+		else
+		{
+			animTcl::OutputMessage("system %s: wrong number of params for command 'particle'.", m_name.c_str());
+			return TCL_ERROR;
+		}
+	}
+	else if (strcmp(argv[0], "all_velocities") == 0)
+	{
+		// Set all velocities to specified velocity.
+		if (argc == 4)
+		{
+			Vector v = { std::stod(argv[1]),  std::stod(argv[2]), std::stod(argv[3]) };
+
+			for (int i = 0; i < numParticles; i++)
+			{
+				VecCopy(*velocities[i], v);
+			}
+		}
+		else
+		{
+			animTcl::OutputMessage("system %s: wrong number of params for command 'all_velocities'.", m_name.c_str());
+			return TCL_ERROR;
+		}
+	}
+
+	glutPostRedisplay();
+	if (particles.size() > 0)
+	{
+		animTcl::OutputMessage("particles[0]: {%f, %f, %f}", *(particles[0])[0], *(particles[0])[1], *(particles[0])[2]);
+	}
+	return TCL_OK;
+}	// SpringMass::command
+
+void SpringMass::display(GLenum mode)
+{
+	glEnable(GL_LIGHTING);
+	glEnable(GL_COLOR_MATERIAL);
+	glPointSize(5.0);
+	glColor3f(1.0, 0.0, 0.0);
+	glBegin(GL_POINTS);
+	for (int i = 0; i < particles.size(); i++)
+	{
+		animTcl::OutputMessage("particles[0]: {%f, %f, %f}, test this: {%f, %f, %f}", *(particles[0])[0], *(particles[0])[1], *(particles[0])[2]), *particles[0][0], * particles[0][1], * particles[0][2];
+		glVertex3d(*(particles[i])[0], *(particles[i])[1], *(particles[i])[2]);
+	}
+	glEnd();
+	glColor3f(0.5, 0.5, 0.5);
+	glBegin(GL_QUADS);
+
+	glVertex3d(-100, -5, -100);
+	glVertex3d(100, -5, -100);
+	glVertex3d(100, -5, 100);
+	glVertex3d(-100, -5, 100);
+
+	glEnd();
+}	// SampleParticle::display
