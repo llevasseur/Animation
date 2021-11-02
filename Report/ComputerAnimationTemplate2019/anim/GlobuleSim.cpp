@@ -10,7 +10,7 @@ GlobuleSim::~GlobuleSim()
 {
 }	// GlobuleSim::~GlobuleSim
 
-float GlobuleSim::Cr(float r0)
+double GlobuleSim::Cr(double r0)
 {
 	if (strcmp(material, "solid"))
 	{
@@ -22,7 +22,7 @@ float GlobuleSim::Cr(float r0)
 	}
 } // GlobuleSim::Cr
 
-float GlobuleSim::Cd(float r0)
+double GlobuleSim::Cd(double r0)
 {
 	if (strcmp(material, "powder"))
 	{
@@ -34,50 +34,50 @@ float GlobuleSim::Cd(float r0)
 	}
 } // GlobuleSim::Cd
 
-float GlobuleSim::b2(float r0)
+double GlobuleSim::b2(double r0)
 {
 	return b1 * pow(r0, n - m);
 } // GlobuleSim::b2
 
-float* GlobuleSim::solveF(int index, vector<float*> globs, vector<float*> vel, vector<float> radii, float r0, float mass)
+double* GlobuleSim::solveF(int index, vector<double*> globs, vector<double*> vel, vector<double> radii, double r0, double mass)
 {
 	// Determine F total
-	float* FTotal = new float[3]{ 0.0f, 0.0f, 0.0f };
+	double* FTotal = new double[3]{ 0.0f, 0.0f, 0.0f };
 
 	// Find globule p at index
-	float* currGlob = new float[3]{ globs[index][0], globs[index][1], globs[index][2] };
-	float* currVel = new float[3]{ vel[index][0], vel[index][1], vel[index][2] };
-	float currRadius = radii[index];
+	double* currGlob = new double[3]{ globs[index][0], globs[index][1], globs[index][2] };
+	double* currVel = new double[3]{ vel[index][0], vel[index][1], vel[index][2] };
+	double currRadius = radii[index];
 
 	for (int i = 0; i < globs.size(); i++)
 	{
-		float* Fip = new float[3]{ 0.0f, 0.0f, 0.0f };
+		double* Fip = new double[3]{ 0.0f, 0.0f, 0.0f };
 		if (i != index)
 		{
 			// Globule i acting on p
-			float* otherGlob = new float[3]{ globs[i][0], globs[i][1], globs[i][2] };
-			float* otherVel = new float[3]{ vel[i][0], vel[i][1], vel[i][2] };
-			float otherRadius = radii[i];
+			double* otherGlob = new double[3]{ globs[i][0], globs[i][1], globs[i][2] };
+			double* otherVel = new double[3]{ vel[i][0], vel[i][1], vel[i][2] };
+			double otherRadius = radii[i];
 
-			float repulsionTerm = 0;
-			float dragTerm = 0;
-			float thisCr = Cr(r0);
-			float thisCd = Cd(r0);
+			double repulsionTerm = 0;
+			double dragTerm = 0;
+			double thisCr = Cr(r0);
+			double thisCd = Cd(r0);
 
-			float D = sqrt(pow(otherGlob[0] - currGlob[0], 2) + pow(otherGlob[1] - currGlob[1], 2) + pow(otherGlob[2] - currGlob[2], 2));
+			double D = sqrt(pow(otherGlob[0] - currGlob[0], 2) + pow(otherGlob[1] - currGlob[1], 2) + pow(otherGlob[2] - currGlob[2], 2));
 
-			float* pHat = new float[3]{
+			double* pHat = new double[3]{
 				otherGlob[0] - currGlob[0],
 				otherGlob[1] - currGlob[1],
 				otherGlob[2] - currGlob[2]
 			}; // Vector difference between globules
 
 			// solve for Sr and Sd
-			float secondTermSr = pow(D, 2) / pow(thisCr, 2) * pow(otherRadius - currRadius, 2);
-			float Sr = 1 - secondTermSr;
+			double secondTermSr = pow(D, 2) / pow(thisCr, 2) * pow(otherRadius - currRadius, 2);
+			double Sr = 1 - secondTermSr;
 
-			float secondTermSd = pow(D, 2) / pow(thisCd, 2) * pow(otherRadius - currRadius, 2);
-			float Sd = 1 - secondTermSd;
+			double secondTermSd = pow(D, 2) / pow(thisCd, 2) * pow(otherRadius - currRadius, 2);
+			double Sd = 1 - secondTermSd;
 
 			// Check for negligibal force, ie the globules are too far away to influence
 			if (Sr < 0.0)
@@ -86,7 +86,7 @@ float* GlobuleSim::solveF(int index, vector<float*> globs, vector<float*> vel, v
 			}
 			else
 			{
-				float thisB2 = b2(r0);
+				double thisB2 = b2(r0);
 				repulsionTerm = Sr * ((b1 / pow(D, m)) - (thisB2 / pow(D, n)));
 
 			}
@@ -96,20 +96,20 @@ float* GlobuleSim::solveF(int index, vector<float*> globs, vector<float*> vel, v
 			}
 			else
 			{
-				float* vHat = new float[3]{
+				double* vHat = new double[3]{
 				otherVel[0] - currVel[0],
 				otherVel[1] - currVel[1],
 				otherVel[2] - currVel[2]
 				}; // Vector differnece between globule velocities
 
 				// find dot product of vHat and pHat
-				float vDotp = vHat[0] * pHat[0] + vHat[1] * pHat[1] + vHat[2] * pHat[2];
+				double vDotp = vHat[0] * pHat[0] + vHat[1] * pHat[1] + vHat[2] * pHat[2];
 
 				dragTerm = Sd * (vDotp / pow(D, 2));
 			}
 
 			// Solve for Repulsion/Attraction - Drag
-			float influence = repulsionTerm - dragTerm;
+			double influence = repulsionTerm - dragTerm;
 
 			// Finally, solve for Fip
 			Fip[0] = pHat[0] * influence;
@@ -135,32 +135,33 @@ int GlobuleSim::step(double time)
 {
 	// Determine which integration method to use to determine new velocity and new position based on set time step
 	// retrive data from system
-	vector<float*> newGlobs;
-	vector<float*> newV;
-	vector<float*> globs = mySystem->getGlobules();
-	vector<float*> vel = mySystem->getVelocities();
-	vector<float*> prevGlobs = mySystem->getPrevGlobules();
+	vector<double*> newGlobs;
+	vector<double*> newV;
+	vector<double*> globs = mySystem->getGlobules();
+	vector<double*> vel = mySystem->getVelocities();
+	vector<double*> prevGlobs = mySystem->getPrevGlobules();
 
-	vector<float> masses = mySystem->getMasses();
-	vector<float> radii = mySystem->getRadii();
-	float r0 = mySystem->getR0();
+	vector<double> masses = mySystem->getMasses();
+	vector<double> radii = mySystem->getRadii();
+	double r0 = mySystem->getR0();
 	// end retrive data
 
 	// initialize constants
-	float* groundP = new float[3]{ 0.0, -5.0, 0.0 }; // initialized in system
-	float* groundN = new float[3]{ 0.0, 1.0, 0.0 };
+	double* groundP = new double[3]{ 0.0, -5.0, 0.0 }; // initialized in system
+	double* groundN = new double[3]{ 0.0, 1.0, 0.0 };
 
 	// use user requested time
 	time = myTime;
 
 	for (int p = 0; p < globs.size(); p++)
 	{
-		float* currGlob = new float[3]{ globs[p][0], globs[p][1] , globs[p][2] };
-		float* currVel = new float[3]{ vel[p][0], vel[p][1], vel[p][2] };
-		float* FTotal = solveF(p, globs, vel, radii, r0, masses[p]);
+		double* currGlob = new double[3]{ globs[p][0], globs[p][1] , globs[p][2] };
+		double* currVel = new double[3]{ vel[p][0], vel[p][1], vel[p][2] };
+		double* FTotal = solveF(p, globs, vel, radii, r0, masses[p]);
+		animTcl::OutputMessage("FORCE: %f %f %f", FTotal[0], FTotal[1], FTotal[2]);
 		
 		// forward euler
-		float* newVel = new float[3]{ 0.0f, 0.0f, 0.0f };
+		double* newVel = new double[3]{ 0.0f, 0.0f, 0.0f };
 		newVel[0] = currVel[0] + time * FTotal[0] / masses[p];
 		newVel[1] = currVel[0] + time * FTotal[1] / masses[p];
 		newVel[2] = currVel[0] + time * FTotal[2] / masses[p];

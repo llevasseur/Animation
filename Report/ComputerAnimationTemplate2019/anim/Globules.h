@@ -24,31 +24,31 @@ class Globules : public BaseSystem
 
 public:
 	Globules(const std::string& name);
-	virtual void getState(vector<float*> p, vector<float*> v);
-	virtual void setState(vector<float*> p);
+	virtual void getState(vector<double*> p, vector<double*> v);
+	virtual void setState(vector<double*> p);
 	void reset(double time);
-	void setVel(vector<float*> v);
+	void setVel(vector<double*> v);
 
-	vector<float*> getGlobules();
-	vector<float*> getVelocities();
-	vector<float*> getPrevGlobules();
-	vector<float> getMasses();
-	vector<float> getRadii();
-	float getR0();
+	vector<double*> getGlobules();
+	vector<double*> getVelocities();
+	vector<double*> getPrevGlobules();
+	vector<double> getMasses();
+	vector<double> getRadii();
+	double getR0();
 
 	int command(int argc, myCONST_SPEC char** argv);
 	void display(GLenum mode = GL_RENDER);
 
 	int numGlobules = 0;
 
-	vector<float> masses;
-	vector<float> radii;
+	vector<double> masses;
+	vector<double> radii;
 
-	vector<float*> globules;
-	vector<float*> velocities;
-	vector<float*> prevGlobules;
+	vector<double*> globules;
+	vector<double*> velocities;
+	vector<double*> prevGlobules;
 
-	float r0 = 2.0;
+	double r0 = 2.0;
 
 protected:
 

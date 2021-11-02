@@ -6,13 +6,13 @@ Globules::Globules(const std::string& name) :
 
 } // Globules
 
-void Globules::getState(vector<float*> p, vector<float*> v)
+void Globules::getState(vector<double*> p, vector<double*> v)
 {
-	p = vector<float*>(globules);
+	p = vector<double*>(globules);
 	v = velocities;
 }	// Globules::getState
 
-void Globules::setState(vector<float*> p)
+void Globules::setState(vector<double*> p)
 {
 	prevGlobules = globules;
 	globules = p;
@@ -24,37 +24,37 @@ void Globules::reset(double time)
 
 } // Globules::reset
 
-void Globules::setVel(vector<float*> v)
+void Globules::setVel(vector<double*> v)
 {
 	velocities = v;
 } // Globules::setVel
 
-vector<float*> Globules::getGlobules()
+vector<double*> Globules::getGlobules()
 {
 	return globules;
 } // Globules::getParticles
 
-vector<float*> Globules::getVelocities()
+vector<double*> Globules::getVelocities()
 {
 	return velocities;
 } // Globules::getVelocities
 
-vector<float*> Globules::getPrevGlobules()
+vector<double*> Globules::getPrevGlobules()
 {
 	return prevGlobules;
 } // Globules::getParticles
 
-vector<float> Globules::getMasses()
+vector<double> Globules::getMasses()
 {
 	return masses;
 } // Globules::getMasses
 
-vector<float> Globules::getRadii()
+vector<double> Globules::getRadii()
 {
 	return radii;
 } // Globules::getRadii
 
-float Globules::getR0()
+double Globules::getR0()
 {
 	return r0;
 } // Globules::getR0()
@@ -92,14 +92,15 @@ int Globules::command(int argc, myCONST_SPEC char** argv)
 				animTcl::OutputMessage("system %s: index out of bounds in 'globule'.", m_name.c_str());
 				return TCL_ERROR;
 			}
-			float mass = std::stof(argv[2]);
+			double mass = std::stod(argv[2]);
 			masses.push_back(mass);
 
-			float radius = std::stof(argv[3]);
+			double radius = std::stod(argv[3]);
 			radii.push_back(radius);
 
-			float* p = new float[3]{ std::stof(argv[4]), std::stof(argv[5]), std::stof(argv[6]) };
-			float* v = new float[3]{ std::stof(argv[7]),  std::stof(argv[8]),  std::stof(argv[9]) };
+			double* p = new double[3]{ std::stod(argv[4]), std::stod(argv[5]), std::stod(argv[6]) };
+			animTcl::OutputMessage("Created p: %f, %f, %f", p[0], p[1], p[2]);
+			double* v = new double[3]{ std::stod(argv[7]),  std::stod(argv[8]),  std::stod(argv[9]) };
 
 			globules.push_back(p);
 			velocities.push_back(v);
@@ -115,10 +116,10 @@ int Globules::command(int argc, myCONST_SPEC char** argv)
 		// Set all velocities to specified velocity.
 		if (argc == 4)
 		{
-			float* v = new float[3];
-			v[0] = std::stof(argv[1]);
-			v[1] = std::stof(argv[2]);
-			v[2] = std::stof(argv[3]);
+			double* v = new double[3];
+			v[0] = std::stod(argv[1]);
+			v[1] = std::stod(argv[2]);
+			v[2] = std::stod(argv[3]);
 
 			for (int i = 0; i < numGlobules; i++)
 			{
@@ -136,7 +137,7 @@ int Globules::command(int argc, myCONST_SPEC char** argv)
 		// Set all velocities to specified velocity.
 		if (argc == 2)
 		{
-			r0 = std::stof(argv[1]);
+			r0 = std::stod(argv[1]);
 		}
 		else
 		{
@@ -149,6 +150,31 @@ int Globules::command(int argc, myCONST_SPEC char** argv)
 	return TCL_OK;
 }	// Globules::command
 
+/*void Globules::display(GLenum mode)
+{
+	glEnable(GL_LIGHTING);
+	glEnable(GL_COLOR_MATERIAL);
+	glPointSize(5.0);
+	glColor3f(1.0, 0.0, 0.0);
+	// Draw Particles
+	glBegin(GL_POINTS);
+	for (int i = 0; i < globules.size(); i++)
+	{
+		glVertex3d(globules[i][0], globules[i][1], globules[i][2]);
+	}
+	glEnd();
+
+	// Draw Ground Plane
+	glBegin(GL_QUADS);
+	glColor3f(0.5, 0.5, 0.5);
+	glVertex3d(-100, -5, -100);
+	glVertex3d(100, -5, -100);
+	glVertex3d(100, -5, 100);
+	glVertex3d(-100, -5, 100);
+
+	glEnd();
+}	// Globules::display*/
+
 void Globules::display(GLenum mode)
 {
 	glEnable(GL_LIGHTING);
@@ -156,16 +182,15 @@ void Globules::display(GLenum mode)
 	glPointSize(5.0);
 	glColor3f(1.0, 0.0, 0.0);
 	// Draw Particles
-	animTcl::OutputMessage("globules.size():", globules.size());
-	glBegin(GL_POLYGON);
+	animTcl::OutputMessage("globules.size(): %d", globules.size());
 	for (int i = 0; i < globules.size(); i++)
 	{
-		glTranslatef(globules[i][0], globules[i][1], globules[i][2]);
-		animTcl::OutputMessage("GLOB Y:", globules[i][1]);
+		glPushMatrix();
+		glTranslated(globules[i][0], globules[i][1], globules[i][2]);
+		animTcl::OutputMessage("translate inputs: %f, %f, %f", globules[i][0], globules[i][1], globules[i][2]);
 		glutSolidSphere(radii[i], 20, 20);
+		glPopMatrix();
 	}
-	glEnd();
-	
 
 	// Draw Ground Plane
 	glBegin(GL_QUADS);

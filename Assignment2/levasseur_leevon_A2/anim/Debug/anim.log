@@ -1,15 +1,1 @@
-﻿cl : command line warning D9035: option 'Gm' has been deprecated and will be removed in a future release
-  SpringSim.cpp
-  SpringMass.cpp
-  BaseSystem.cpp
-  SampleParticle.cpp
-  SampleGravitySimulator.cpp
-  ResourceManager.cpp
-  myScene.cpp
-  GlobalResourceManager.cpp
-  BaseSimulator.cpp
-  BaseObject.cpp
-  animTcl.cpp
-  anim.cpp
-  Generating Code...
-  anim.vcxproj -> C:\Users\Leeovn\Desktop\MyGithub\Animation\Assignment2\levasseur_leevon_A2\Build\anim.exe
+﻿
